@@ -11,9 +11,7 @@ from decimal import Decimal
 from django.core.management.base import BaseCommand
 from django.db.models import Avg, Count, DecimalField, F, Q, Sum
 
-from books.models import Book, Category
-
-LOW_STOCK_THRESHOLD = 5
+from books.models import LOW_STOCK_THRESHOLD, Book, Category
 
 
 class Command(BaseCommand):

@@ -1,9 +1,7 @@
 from django.contrib import admin
 from django.db.models import Count
 
-from .models import Book, BookCategory, Category
-
-LOW_STOCK_THRESHOLD = 5
+from .models import Book, BookCategory, BookQuerySet, Category
 
 
 # ---------------------------------------------------------------------------
@@ -48,20 +46,10 @@ class StockStatusFilter(admin.SimpleListFilter):
     parameter_name = "stock_status"
 
     def lookups(self, request, model_admin):
-        return [
-            ("in_stock", "In stock"),
-            ("low", f"Low (≤ {LOW_STOCK_THRESHOLD})"),
-            ("out", "Out of stock"),
-        ]
+        return BookQuerySet.STOCK_STATUS_CHOICES
 
     def queryset(self, request, queryset):
-        if self.value() == "in_stock":
-            return queryset.filter(stock__gt=0)
-        if self.value() == "low":
-            return queryset.filter(stock__gt=0, stock__lte=LOW_STOCK_THRESHOLD)
-        if self.value() == "out":
-            return queryset.filter(stock=0)
-        return queryset
+        return queryset.by_stock_status(self.value())
 
 
 # ---------------------------------------------------------------------------

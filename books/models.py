@@ -2,6 +2,30 @@ from decimal import Decimal
 
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.urls import reverse
+
+LOW_STOCK_THRESHOLD = 5
+
+
+class BookQuerySet(models.QuerySet):
+    STOCK_IN = "in_stock"
+    STOCK_LOW = "low"
+    STOCK_OUT = "out"
+    STOCK_STATUS_CHOICES = [
+        (STOCK_IN, "In stock"),
+        (STOCK_LOW, f"Low (≤ {LOW_STOCK_THRESHOLD})"),
+        (STOCK_OUT, "Out of stock"),
+    ]
+
+    def by_stock_status(self, status):
+        """Filter by one of STOCK_STATUS_CHOICES; unknown/empty value -> no filter."""
+        if status == self.STOCK_IN:
+            return self.filter(stock__gt=0)
+        if status == self.STOCK_LOW:
+            return self.filter(stock__gt=0, stock__lte=LOW_STOCK_THRESHOLD)
+        if status == self.STOCK_OUT:
+            return self.filter(stock=0)
+        return self
 
 
 class Category(models.Model):
@@ -36,11 +60,20 @@ class Book(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    objects = BookQuerySet.as_manager()
+
     class Meta:
         ordering = ["title"]
 
     def __str__(self):
         return f"{self.title} — {self.author}"
+
+    def get_absolute_url(self):
+        return reverse("books:detail", kwargs={"pk": self.pk})
+
+    @property
+    def is_low_stock(self):
+        return 0 < self.stock <= LOW_STOCK_THRESHOLD
 
 
 class BookCategory(models.Model):

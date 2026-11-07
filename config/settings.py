@@ -66,7 +66,8 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        # Project-wide templates (base.html, navbar, pagination, ...)
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -127,6 +128,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
 STATIC_URL = "static/"
+
+# Project-wide static files (css, images) that don't belong to a single app
+STATICFILES_DIRS = [BASE_DIR / "static"]
+
+# Target directory for `collectstatic` (used in production, not in git)
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 
 # Email
