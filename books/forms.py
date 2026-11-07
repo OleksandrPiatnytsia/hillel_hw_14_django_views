@@ -1,6 +1,21 @@
 from django import forms
+from django.core.files.uploadedfile import UploadedFile
+from django.core.validators import FileExtensionValidator
 
 from .models import Book, BookQuerySet, Category
+
+COVER_MAX_SIZE_MB = 2
+COVER_ALLOWED_EXTENSIONS = ["jpg", "jpeg", "png", "webp"]
+
+
+class CoverInput(forms.ClearableFileInput):
+    """File input with a preview of the current cover and a "Remove" checkbox.
+
+    Same logic as Django's ClearableFileInput, only the HTML is replaced
+    with Bootstrap markup (see the template).
+    """
+
+    template_name = "books/widgets/cover_input.html"
 
 
 class BookForm(forms.ModelForm):
@@ -8,8 +23,30 @@ class BookForm(forms.ModelForm):
 
     class Meta:
         model = Book
-        fields = ["title", "author", "price", "stock", "categories", "description"]
+        fields = [
+            "title",
+            "author",
+            "price",
+            "stock",
+            "categories",
+            "description",
+            "cover",
+        ]
+        help_texts = {
+            "cover": (
+                f"JPG, PNG or WebP, up to {COVER_MAX_SIZE_MB} MB. "
+                "Without a cover a placeholder is shown."
+            ),
+        }
         widgets = {
+            # accept: the browser's file dialog shows only these types
+            # (just a convenience — the real check is in clean_cover)
+            "cover": CoverInput(
+                attrs={
+                    "class": "form-control",
+                    "accept": "image/jpeg,image/png,image/webp",
+                }
+            ),
             "title": forms.TextInput(attrs={"class": "form-control"}),
             "author": forms.TextInput(attrs={"class": "form-control"}),
             "price": forms.NumberInput(
@@ -23,6 +60,21 @@ class BookForm(forms.ModelForm):
             ),
             "description": forms.Textarea(attrs={"class": "form-control", "rows": 5}),
         }
+
+    def clean_cover(self):
+        """Extra checks on top of ImageField (which already verifies via Pillow
+        that the file is a real image)."""
+        cover = self.cleaned_data.get("cover")
+        # Only a newly uploaded file needs checking. Otherwise the value is
+        # the current cover (nothing uploaded) or False ("Remove" checked).
+        if isinstance(cover, UploadedFile):
+            FileExtensionValidator(COVER_ALLOWED_EXTENSIONS)(cover)
+            if cover.size > COVER_MAX_SIZE_MB * 1024 * 1024:
+                size_mb = cover.size / (1024 * 1024)
+                raise forms.ValidationError(
+                    f"The file is {size_mb:.1f} MB, the limit is {COVER_MAX_SIZE_MB} MB."
+                )
+        return cover
 
 
 class BookFilterForm(forms.Form):

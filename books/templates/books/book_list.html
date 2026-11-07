@@ -1,6 +1,4 @@
 {% extends "base.html" %}
-{# {% load %} is per-file: base.html loading "static" doesn't make it available here #}
-{% load static %}
 
 {% block title %}Catalog{% endblock %}
 
@@ -59,7 +57,7 @@
       {% for book in books %}
         <div class="col">
           <article class="card h-100 shadow-sm book-card">
-            <img class="card-img-top book-cover" src="{% static 'img/no-cover.svg' %}"
+            <img class="card-img-top book-cover" src="{{ book.cover_url }}"
                  alt="" loading="lazy">
             <div class="card-body d-flex flex-column">
               <h2 class="h6 card-title mb-1">

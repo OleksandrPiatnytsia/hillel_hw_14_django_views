@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% load static %}
 
 {% block title %}{{ book.title }}{% endblock %}
 
@@ -14,7 +13,7 @@
 <div class="card shadow-sm">
   <div class="card-body p-4">
     <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
-      <img class="book-cover book-cover--large" src="{% static 'img/no-cover.svg' %}"
+      <img class="book-cover book-cover--large" src="{{ book.cover_url }}"
            alt="Cover of {{ book.title }}">
       <div class="flex-grow-1">
         <h1 class="h3 mb-1">{{ book.title }}</h1>

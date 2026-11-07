@@ -219,3 +219,6 @@ __marimo__/
 
 # Django collectstatic output
 staticfiles/
+
+# Django uploaded files (book covers)
+media/

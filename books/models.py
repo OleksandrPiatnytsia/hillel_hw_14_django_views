@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.templatetags.static import static
 from django.urls import reverse
 
 LOW_STOCK_THRESHOLD = 5
@@ -51,6 +52,8 @@ class Book(models.Model):
     )
     description = models.TextField(blank=True)
     stock = models.PositiveIntegerField(default=0)
+    # Only the path is stored in the DB; the file goes to MEDIA_ROOT/covers/<year>/<month>/
+    cover = models.ImageField(upload_to="covers/%Y/%m/", blank=True)
     categories = models.ManyToManyField(
         Category,
         through="BookCategory",
@@ -70,6 +73,13 @@ class Book(models.Model):
 
     def get_absolute_url(self):
         return reverse("books:detail", kwargs={"pk": self.pk})
+
+    @property
+    def cover_url(self):
+        """Uploaded cover or the static placeholder — templates don't need if/else."""
+        if self.cover:
+            return self.cover.url
+        return static("img/no-cover.svg")
 
     @property
     def is_low_stock(self):

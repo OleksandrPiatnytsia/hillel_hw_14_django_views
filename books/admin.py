@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.db.models import Count
+from django.utils.html import format_html
 
 from .models import Book, BookCategory, BookQuerySet, Category
 
@@ -77,6 +78,7 @@ class CategoryAdmin(admin.ModelAdmin):
 @admin.register(Book)
 class BookAdmin(admin.ModelAdmin):
     list_display = [
+        "cover_thumbnail",
         "title",
         "author",
         "price",
@@ -90,10 +92,11 @@ class BookAdmin(admin.ModelAdmin):
     list_filter = [StockStatusFilter, "categories", "created_at"]
     search_fields = ["title", "author", "description", "categories__name"]
     date_hierarchy = "created_at"
-    readonly_fields = ["created_at", "updated_at"]
+    readonly_fields = ["cover_preview", "created_at", "updated_at"]
     inlines = [BookCategoryInline]
     fieldsets = [
         (None, {"fields": ["title", "author", "description"]}),
+        ("Cover", {"fields": ["cover_preview", "cover"]}),
         ("Sales", {"fields": ["price", "stock"]}),
         (
             "Timestamps",
@@ -104,6 +107,25 @@ class BookAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         # Load all categories in one extra query instead of one per row
         return super().get_queryset(request).prefetch_related("categories")
+
+    # format_html escapes the arguments and marks the result as safe HTML,
+    # so the admin renders <img> instead of showing it as text.
+    # Inline styles: the admin doesn't load our styles.css.
+    def _cover_img(self, obj, width):
+        return format_html(
+            '<img src="{}" alt="" style="width: {}px; aspect-ratio: 2 / 3; '
+            'object-fit: cover; border-radius: 4px;">',
+            obj.cover_url,
+            width,
+        )
+
+    @admin.display(description="cover")
+    def cover_thumbnail(self, obj):
+        return self._cover_img(obj, 40)
+
+    @admin.display(description="current cover")
+    def cover_preview(self, obj):
+        return self._cover_img(obj, 160)
 
     @admin.display(description="categories")
     def category_list(self, obj):

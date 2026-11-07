@@ -28,7 +28,9 @@ that's how we tell "add" from "edit".
         <h1 class="h4 mb-4">{% if object %}Edit book{% else %}Add book{% endif %}</h1>
 
         {# novalidate: let Django show its own errors instead of browser popups #}
-        <form method="post" novalidate>
+        {# enctype="multipart/form-data": without it the browser sends only the file NAME, #}
+        {# request.FILES stays empty and the cover is silently not saved #}
+        <form method="post" enctype="multipart/form-data" novalidate>
           {% csrf_token %}
 
           {% if form.non_field_errors %}

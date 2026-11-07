@@ -36,6 +36,12 @@ main {
     max-height: 220px;
 }
 
+/* Small preview of the current cover in the edit form */
+.book-cover--thumb {
+    width: 80px;
+    border-radius: var(--bs-border-radius-sm);
+}
+
 .book-cover--large {
     width: 100%;
     max-width: 240px;
