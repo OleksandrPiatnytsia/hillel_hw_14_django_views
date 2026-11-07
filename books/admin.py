@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.db.models import Count
 from django.utils.html import format_html
 
-from .models import Book, BookCategory, BookQuerySet, Category
+from .models import Author, Book, BookCategory, BookQuerySet, Category
 
 
 # ---------------------------------------------------------------------------
@@ -66,6 +66,22 @@ class CategoryAdmin(admin.ModelAdmin):
     # Explicit ordering: Meta.ordering is ignored for annotated (GROUP BY) queries
     ordering = ["name"]
     inlines = [CategoryBookInline]
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).annotate(books_count=Count("books"))
+
+    @admin.display(description="books", ordering="books_count")
+    def books_count(self, obj):
+        return obj.books_count
+
+
+@admin.register(Author)
+class AuthorAdmin(admin.ModelAdmin):
+    list_display = ["name", "books_count"]
+    # search_fields is also required for autocomplete_fields = ["author"] in BookAdmin (stage 4)
+    search_fields = ["name"]
+    # Explicit ordering: Meta.ordering is ignored for annotated (GROUP BY) queries
+    ordering = ["name"]
 
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(books_count=Count("books"))

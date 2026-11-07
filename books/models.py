@@ -42,9 +42,32 @@ class Category(models.Model):
         return self.name
 
 
+class Author(models.Model):
+    # unique: the data migration and seed_books look authors up by name
+    name = models.CharField(max_length=255, unique=True)
+    bio = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
 class Book(models.Model):
     title = models.CharField(max_length=255)
+    # TEMPORARY (stage 2 of moving authors to Author): old text value,
+    # removed in stage 4 after the data migration copies it into `author`
     author_name = models.CharField(max_length=255)
+    # TEMPORARY null=True: existing books get an author only in stage 3
+    # (data migration); stage 4 makes the field required
+    author = models.ForeignKey(
+        Author,
+        on_delete=models.PROTECT,  # can't delete an author who still has books
+        related_name="books",
+        null=True,
+        blank=True,
+    )
     price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
