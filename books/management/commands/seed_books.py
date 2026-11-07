@@ -60,7 +60,7 @@ class Command(BaseCommand):
         for title, author, price, stock, description, slugs in BOOKS:
             book, created = Book.objects.get_or_create(
                 title=title,
-                author=author,
+                author_name=author,
                 defaults={
                     "price": Decimal(price),
                     "stock": stock,

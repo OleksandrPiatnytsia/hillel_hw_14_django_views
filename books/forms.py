@@ -25,7 +25,7 @@ class BookForm(forms.ModelForm):
         model = Book
         fields = [
             "title",
-            "author",
+            "author_name",
             "price",
             "stock",
             "categories",
@@ -48,7 +48,7 @@ class BookForm(forms.ModelForm):
                 }
             ),
             "title": forms.TextInput(attrs={"class": "form-control"}),
-            "author": forms.TextInput(attrs={"class": "form-control"}),
+            "author_name": forms.TextInput(attrs={"class": "form-control"}),
             "price": forms.NumberInput(
                 attrs={"class": "form-control", "min": "0", "step": "0.01"}
             ),

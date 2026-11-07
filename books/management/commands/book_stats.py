@@ -62,11 +62,9 @@ class Command(BaseCommand):
 
         # OR is impossible with plain kwargs -> Q. The JOIN to categories can
         # return one book several times (one row per category), so distinct().
-        # Note: on SQLite icontains ignores case only for ASCII letters, so
-        # "кінг" won't match "Кінг". PostgreSQL handles Cyrillic correctly.
         search_q = (
             Q(title__icontains=search)
-            | Q(author__icontains=search)
+            | Q(author_name__icontains=search)
             | Q(categories__name__icontains=search)
         )
         found = Book.objects.filter(search_q).distinct()

@@ -222,3 +222,6 @@ staticfiles/
 
 # Django uploaded files (book covers)
 media/
+
+# Local DB backups (e.g. before data migrations)
+*.sqlite3

@@ -44,7 +44,7 @@ class Category(models.Model):
 
 class Book(models.Model):
     title = models.CharField(max_length=255)
-    author = models.CharField(max_length=255)
+    author_name = models.CharField(max_length=255)
     price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -69,7 +69,7 @@ class Book(models.Model):
         ordering = ["title"]
 
     def __str__(self):
-        return f"{self.title} — {self.author}"
+        return f"{self.title} — {self.author_name}"
 
     def get_absolute_url(self):
         return reverse("books:detail", kwargs={"pk": self.pk})

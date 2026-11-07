@@ -80,7 +80,7 @@ class BookAdmin(admin.ModelAdmin):
     list_display = [
         "cover_thumbnail",
         "title",
-        "author",
+        "author_name",
         "price",
         "stock",
         "is_available",
@@ -90,12 +90,12 @@ class BookAdmin(admin.ModelAdmin):
     list_display_links = ["title"]
     list_editable = ["price", "stock"]
     list_filter = [StockStatusFilter, "categories", "created_at"]
-    search_fields = ["title", "author", "description", "categories__name"]
+    search_fields = ["title", "author_name", "description", "categories__name"]
     date_hierarchy = "created_at"
     readonly_fields = ["cover_preview", "created_at", "updated_at"]
     inlines = [BookCategoryInline]
     fieldsets = [
-        (None, {"fields": ["title", "author", "description"]}),
+        (None, {"fields": ["title", "author_name", "description"]}),
         ("Cover", {"fields": ["cover_preview", "cover"]}),
         ("Sales", {"fields": ["price", "stock"]}),
         (

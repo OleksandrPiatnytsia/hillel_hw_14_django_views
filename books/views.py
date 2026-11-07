@@ -35,7 +35,7 @@ class BookListView(ListView):
         data = self.filter_form.cleaned_data
         if data["q"]:
             queryset = queryset.filter(
-                Q(title__icontains=data["q"]) | Q(author__icontains=data["q"])
+                Q(title__icontains=data["q"]) | Q(author_name__icontains=data["q"])
             )
         if data["category"]:
             queryset = queryset.filter(categories=data["category"])
