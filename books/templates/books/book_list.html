@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{# {% load %} is per-file: base.html loading "static" doesn't make it available here #}
+{% load static %}
 
 {% block title %}Catalog{% endblock %}
 
@@ -12,7 +14,7 @@
 
   {# ---------- Filters (sidebar) ---------- #}
   <aside class="col-lg-3">
-    <div class="card shadow-sm">
+    <div class="card shadow-sm filters-sidebar">
       <div class="card-header fw-semibold">Filters</div>
       <div class="card-body">
         {# GET, not POST: filters are part of the URL, so the page can be bookmarked/shared #}
@@ -57,6 +59,8 @@
       {% for book in books %}
         <div class="col">
           <article class="card h-100 shadow-sm book-card">
+            <img class="card-img-top book-cover" src="{% static 'img/no-cover.svg' %}"
+                 alt="" loading="lazy">
             <div class="card-body d-flex flex-column">
               <h2 class="h6 card-title mb-1">
                 {# get_absolute_url() -> {% url 'books:detail' book.pk %} #}

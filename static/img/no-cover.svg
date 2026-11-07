@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 300" role="img" aria-label="No cover">
+  <rect width="200" height="300" fill="#e9ecef"/>
+  <rect x="10" y="10" width="180" height="280" rx="6" fill="none" stroke="#ced4da" stroke-width="2"/>
+  <!-- open book icon -->
+  <g fill="none" stroke="#adb5bd" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M100 118 C 82 104, 58 102, 44 106 V 176 C 58 172, 82 174, 100 188 Z"/>
+    <path d="M100 118 C 118 104, 142 102, 156 106 V 176 C 142 172, 118 174, 100 188 Z"/>
+  </g>
+  <text x="100" y="230" text-anchor="middle" font-family="system-ui, sans-serif"
+        font-size="16" fill="#868e96">No cover</text>
+</svg>
