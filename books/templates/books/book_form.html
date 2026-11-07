@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% comment %}
+Shared by BookCreateView and BookUpdateView.
+UpdateView puts the edited book into context as "object", CreateView doesn't —
+that's how we tell "add" from "edit".
+{% endcomment %}
+
+{% block title %}{% if object %}Edit “{{ object.title }}”{% else %}Add book{% endif %}{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'books:list' %}">Catalog</a></li>
+    {% if object %}
+      <li class="breadcrumb-item"><a href="{{ object.get_absolute_url }}">{{ object.title }}</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Edit</li>
+    {% else %}
+      <li class="breadcrumb-item active" aria-current="page">Add book</li>
+    {% endif %}
+  </ol>
+</nav>
+
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <h1 class="h4 mb-4">{% if object %}Edit book{% else %}Add book{% endif %}</h1>
+
+        {# novalidate: let Django show its own errors instead of browser popups #}
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+              {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+            </div>
+          {% endif %}
+
+          {% for field in form %}
+            <div class="mb-3">
+              {% if field.name == "categories" %}
+                {# CheckboxSelectMultiple: render each checkbox in Bootstrap's form-check #}
+                <div class="form-label">{{ field.label }}</div>
+                <div class="d-flex flex-wrap gap-3">
+                  {% for checkbox in field %}
+                    <div class="form-check">
+                      {{ checkbox.tag }}
+                      <label class="form-check-label" for="{{ checkbox.id_for_label }}">
+                        {{ checkbox.choice_label }}
+                      </label>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <label class="form-label" for="{{ field.id_for_label }}">
+                  {{ field.label }}{% if field.field.required %} <span class="text-danger">*</span>{% endif %}
+                </label>
+                {{ field }}
+              {% endif %}
+
+              {% if field.help_text %}
+                <div class="form-text">{{ field.help_text }}</div>
+              {% endif %}
+              {% for error in field.errors %}
+                <div class="invalid-feedback d-block">{{ error }}</div>
+              {% endfor %}
+            </div>
+          {% endfor %}
+
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+              {% if object %}Save changes{% else %}Create book{% endif %}
+            </button>
+            <a class="btn btn-outline-secondary"
+               href="{% if object %}{{ object.get_absolute_url }}{% else %}{% url 'books:list' %}{% endif %}">
+              Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Catalog{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h3 mb-0">Catalog</h1>
+  <a class="btn btn-primary" href="{% url 'books:create' %}">+ Add book</a>
+</div>
+
+<div class="row g-4">
+
+  {# ---------- Filters (sidebar) ---------- #}
+  <aside class="col-lg-3">
+    <div class="card shadow-sm">
+      <div class="card-header fw-semibold">Filters</div>
+      <div class="card-body">
+        {# GET, not POST: filters are part of the URL, so the page can be bookmarked/shared #}
+        <form method="get" action="{% url 'books:list' %}">
+
+          {% if filter_form.non_field_errors %}
+            <div class="alert alert-danger py-2 small">
+              {% for error in filter_form.non_field_errors %}{{ error }}{% endfor %}
+            </div>
+          {% endif %}
+
+          {% for field in filter_form %}
+            <div class="mb-3">
+              <label class="form-label small fw-semibold" for="{{ field.id_for_label }}">
+                {{ field.label }}
+              </label>
+              {{ field }}
+              {% for error in field.errors %}
+                <div class="invalid-feedback d-block">{{ error }}</div>
+              {% endfor %}
+            </div>
+          {% endfor %}
+
+          <div class="d-grid gap-2">
+            <button class="btn btn-primary" type="submit">Apply</button>
+            {# Link without GET params = all filters reset #}
+            <a class="btn btn-outline-secondary" href="{% url 'books:list' %}">Reset</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </aside>
+
+  {# ---------- Results ---------- #}
+  <section class="col-lg-9">
+    <p class="text-body-secondary small mb-3">
+      Found: {{ paginator.count }} book{{ paginator.count|pluralize }}
+      {% if is_paginated %}· page {{ page_obj.number }} of {{ paginator.num_pages }}{% endif %}
+    </p>
+
+    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">
+      {% for book in books %}
+        <div class="col">
+          <article class="card h-100 shadow-sm book-card">
+            <div class="card-body d-flex flex-column">
+              <h2 class="h6 card-title mb-1">
+                {# get_absolute_url() -> {% url 'books:detail' book.pk %} #}
+                <a class="stretched-link text-decoration-none" href="{{ book.get_absolute_url }}">
+                  {{ book.title }}
+                </a>
+              </h2>
+              <p class="card-subtitle text-body-secondary small mb-2">{{ book.author }}</p>
+
+              <div class="mb-3">
+                {# categories come from prefetch_related — no extra query per book #}
+                {% for category in book.categories.all %}
+                  <span class="badge rounded-pill text-bg-light border">{{ category.name }}</span>
+                {% endfor %}
+              </div>
+
+              <div class="mt-auto d-flex justify-content-between align-items-center">
+                <span class="fw-semibold">{{ book.price }} ₴</span>
+                {% include "books/includes/stock_badge.html" with book=book %}
+              </div>
+            </div>
+          </article>
+        </div>
+      {% empty %}
+        <div class="col-12">
+          <div class="alert alert-info mb-0">
+            No books match these filters.
+            <a href="{% url 'books:list' %}" class="alert-link">Show all books</a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    {% include "includes/pagination.html" %}
+  </section>
+
+</div>
+{% endblock %}

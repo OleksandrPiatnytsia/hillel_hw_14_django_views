@@ -1,0 +1,8 @@
+{# Availability badge. Usage: {% include "books/includes/stock_badge.html" with book=book %} #}
+{% if book.stock == 0 %}
+  <span class="badge text-bg-danger">Out of stock</span>
+{% elif book.is_low_stock %}
+  <span class="badge text-bg-warning">Only {{ book.stock }} left</span>
+{% else %}
+  <span class="badge text-bg-success">In stock: {{ book.stock }}</span>
+{% endif %}

@@ -53,6 +53,12 @@ class BookListView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["filter_form"] = self.filter_form
+        if context["is_paginated"]:
+            # "1 2 … 7 8 9 … 19 20" instead of all page numbers;
+            # templates can't call methods with arguments, so compute it here
+            context["page_range"] = context["paginator"].get_elided_page_range(
+                context["page_obj"].number, on_each_side=2, on_ends=1
+            )
         return context
 
 
