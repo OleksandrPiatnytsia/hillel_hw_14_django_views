@@ -3,7 +3,7 @@ from decimal import Decimal
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from books.models import Book, Category
+from books.models import Author, Book, Category
 
 # slug -> name
 CATEGORIES = {
@@ -57,10 +57,11 @@ class Command(BaseCommand):
             if created:
                 self.stdout.write(f"+ category {name}")
 
-        for title, author, price, stock, description, slugs in BOOKS:
+        for title, author_name, price, stock, description, slugs in BOOKS:
+            author, _ = Author.objects.get_or_create(name=author_name)
             book, created = Book.objects.get_or_create(
                 title=title,
-                author_name=author,
+                author=author,
                 defaults={
                     "price": Decimal(price),
                     "stock": stock,
@@ -75,6 +76,7 @@ class Command(BaseCommand):
         self.stdout.write(
             self.style.SUCCESS(
                 f"Done: {Category.objects.count()} categories, "
+                f"{Author.objects.count()} authors, "
                 f"{Book.objects.count()} books."
             )
         )

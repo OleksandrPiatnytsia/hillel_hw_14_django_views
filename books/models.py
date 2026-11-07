@@ -53,20 +53,16 @@ class Author(models.Model):
     def __str__(self):
         return self.name
 
+    def get_absolute_url(self):
+        return reverse("books:author_detail", kwargs={"pk": self.pk})
+
 
 class Book(models.Model):
     title = models.CharField(max_length=255)
-    # TEMPORARY (stage 2 of moving authors to Author): old text value,
-    # removed in stage 4 after the data migration copies it into `author`
-    author_name = models.CharField(max_length=255)
-    # TEMPORARY null=True: existing books get an author only in stage 3
-    # (data migration); stage 4 makes the field required
     author = models.ForeignKey(
         Author,
         on_delete=models.PROTECT,  # can't delete an author who still has books
-        related_name="books",
-        null=True,
-        blank=True,
+        related_name="books",  # author.books.all()
     )
     price = models.DecimalField(
         max_digits=10,
@@ -92,7 +88,9 @@ class Book(models.Model):
         ordering = ["title"]
 
     def __str__(self):
-        return f"{self.title} — {self.author_name}"
+        # author is a related object: use select_related("author") in lists,
+        # otherwise every str(book) makes an extra query
+        return f"{self.title} — {self.author.name}"
 
     def get_absolute_url(self):
         return reverse("books:detail", kwargs={"pk": self.pk})

@@ -96,7 +96,7 @@ class BookAdmin(admin.ModelAdmin):
     list_display = [
         "cover_thumbnail",
         "title",
-        "author_name",
+        "author",
         "price",
         "stock",
         "is_available",
@@ -106,12 +106,15 @@ class BookAdmin(admin.ModelAdmin):
     list_display_links = ["title"]
     list_editable = ["price", "stock"]
     list_filter = [StockStatusFilter, "categories", "created_at"]
-    search_fields = ["title", "author_name", "description", "categories__name"]
+    search_fields = ["title", "author__name", "description", "categories__name"]
     date_hierarchy = "created_at"
+    # Search-as-you-type instead of a <select> with every author
+    # (needs search_fields in AuthorAdmin)
+    autocomplete_fields = ["author"]
     readonly_fields = ["cover_preview", "created_at", "updated_at"]
     inlines = [BookCategoryInline]
     fieldsets = [
-        (None, {"fields": ["title", "author_name", "description"]}),
+        (None, {"fields": ["title", "author", "description"]}),
         ("Cover", {"fields": ["cover_preview", "cover"]}),
         ("Sales", {"fields": ["price", "stock"]}),
         (
@@ -121,8 +124,13 @@ class BookAdmin(admin.ModelAdmin):
     ]
 
     def get_queryset(self, request):
-        # Load all categories in one extra query instead of one per row
-        return super().get_queryset(request).prefetch_related("categories")
+        # Author via JOIN, categories in one extra query — not a query per row
+        return (
+            super()
+            .get_queryset(request)
+            .select_related("author")
+            .prefetch_related("categories")
+        )
 
     # format_html escapes the arguments and marks the result as safe HTML,
     # so the admin renders <img> instead of showing it as text.

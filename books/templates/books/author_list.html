@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Authors{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h3 mb-0">Authors</h1>
+  {% if user.is_staff %}
+    {# Authors are managed in the admin; the link is shown only to staff users #}
+    <a class="btn btn-outline-primary" href="{% url 'admin:books_author_add' %}">+ Add author (admin)</a>
+  {% endif %}
+</div>
+
+<div class="card shadow-sm">
+  <div class="list-group list-group-flush">
+    {% for author in authors %}
+      <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+         href="{{ author.get_absolute_url }}">
+        {{ author.name }}
+        {# books_count comes from annotate(Count("books")) in AuthorListView #}
+        <span class="badge text-bg-secondary rounded-pill">
+          {{ author.books_count }} book{{ author.books_count|pluralize }}
+        </span>
+      </a>
+    {% empty %}
+      <div class="list-group-item text-body-secondary">No authors yet.</div>
+    {% endfor %}
+  </div>
+</div>
+
+{% include "includes/pagination.html" %}
+{% endblock %}

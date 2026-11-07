@@ -64,7 +64,7 @@ class Command(BaseCommand):
         # return one book several times (one row per category), so distinct().
         search_q = (
             Q(title__icontains=search)
-            | Q(author_name__icontains=search)
+            | Q(author__name__icontains=search)
             | Q(categories__name__icontains=search)
         )
         found = Book.objects.filter(search_q).distinct()

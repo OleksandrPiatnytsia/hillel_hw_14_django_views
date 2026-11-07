@@ -2,7 +2,7 @@ from django import forms
 from django.core.files.uploadedfile import UploadedFile
 from django.core.validators import FileExtensionValidator
 
-from .models import Book, BookQuerySet, Category
+from .models import Author, Book, BookQuerySet, Category
 
 COVER_MAX_SIZE_MB = 2
 COVER_ALLOWED_EXTENSIONS = ["jpg", "jpeg", "png", "webp"]
@@ -25,7 +25,7 @@ class BookForm(forms.ModelForm):
         model = Book
         fields = [
             "title",
-            "author_name",
+            "author",
             "price",
             "stock",
             "categories",
@@ -33,6 +33,7 @@ class BookForm(forms.ModelForm):
             "cover",
         ]
         help_texts = {
+            "author": "New authors are added in the admin.",
             "cover": (
                 f"JPG, PNG or WebP, up to {COVER_MAX_SIZE_MB} MB. "
                 "Without a cover a placeholder is shown."
@@ -48,7 +49,8 @@ class BookForm(forms.ModelForm):
                 }
             ),
             "title": forms.TextInput(attrs={"class": "form-control"}),
-            "author_name": forms.TextInput(attrs={"class": "form-control"}),
+            # ForeignKey -> <select> with all authors (ModelChoiceField)
+            "author": forms.Select(attrs={"class": "form-select"}),
             "price": forms.NumberInput(
                 attrs={"class": "form-control", "min": "0", "step": "0.01"}
             ),
@@ -83,6 +85,7 @@ class BookFilterForm(forms.Form):
     SORT_CHOICES = [
         ("title", "Title A→Z"),
         ("-title", "Title Z→A"),
+        ("author__name", "Author A→Z"),
         ("price", "Price: low to high"),
         ("-price", "Price: high to low"),
         ("-created_at", "Newest first"),
@@ -100,6 +103,12 @@ class BookFilterForm(forms.Form):
         required=False,
         to_field_name="slug",  # ?category=fantasy instead of ?category=3
         empty_label="All categories",
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+    author = forms.ModelChoiceField(
+        queryset=Author.objects.all(),
+        required=False,  # ?author=<pk>
+        empty_label="All authors",
         widget=forms.Select(attrs={"class": "form-select"}),
     )
     stock = forms.ChoiceField(

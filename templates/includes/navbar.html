@@ -19,6 +19,12 @@
              href="{% url 'books:list' %}">Catalog</a>
         </li>
         <li class="nav-item">
+          {# "author_list" and "author_detail" both highlight "Authors" #}
+          <a class="nav-link {% if current == 'author_list' or current == 'author_detail' %}active{% endif %}"
+             {% if current == 'author_list' %}aria-current="page"{% endif %}
+             href="{% url 'books:author_list' %}">Authors</a>
+        </li>
+        <li class="nav-item">
           <a class="nav-link {% if current == 'create' %}active{% endif %}"
              {% if current == 'create' %}aria-current="page"{% endif %}
              href="{% url 'books:create' %}">Add book</a>

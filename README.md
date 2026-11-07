@@ -25,6 +25,8 @@ management-команди): тепер у книгарні є власний с�
 | `/create/` | `books:create` | `BookCreateView` | додавання книги |
 | `/<pk>/update/` | `books:update` | `BookUpdateView` | редагування книги |
 | `/<pk>/delete/` | `books:delete` | `BookDeleteView` | підтвердження й видалення |
+| `/authors/` | `books:author_list` | `AuthorListView` | автори з кількістю книг |
+| `/authors/<pk>/` | `books:author_detail` | `AuthorDetailView` | автор, біографія та його книги |
 | `/admin/` | `admin:index` | | адмінка |
 
 Маршрути описані в `books/urls.py` з `app_name = "books"` (namespace) і
@@ -39,9 +41,9 @@ config/
 ├── settings.py              # templates, static, media
 └── urls.py                  # admin + include("books.urls") + media у DEBUG
 books/
-├── models.py                # Category, Book (+ cover), BookCategory, BookQuerySet
+├── models.py                # Category, Author, Book (+ cover), BookCategory, BookQuerySet
 ├── forms.py                 # BookForm, BookFilterForm, CoverInput
-├── views.py                 # 5 Class-Based Views
+├── views.py                 # Class-Based Views для книг і авторів
 ├── urls.py                  # app_name = "books"
 ├── admin.py                 # адмінка (+ мініатюри обкладинок)
 ├── apps.py                  # підключення сигналу для SQLite
@@ -51,6 +53,8 @@ books/
 │   ├── book_detail.html
 │   ├── book_form.html             # спільний для Create і Update
 │   ├── book_confirm_delete.html
+│   ├── author_list.html
+│   ├── author_detail.html
 │   ├── includes/stock_badge.html  # бейдж наявності
 │   └── widgets/cover_input.html   # поле обкладинки з прев'ю
 └── management/commands/
@@ -79,6 +83,11 @@ media/                       # завантажені обкладинки (не
 | `BookCreateView` | `books/book_form.html` | `form_class = BookForm`; після збереження редирект на `get_absolute_url()` |
 | `BookUpdateView` | `books/book_form.html` | той самий шаблон; заголовок і кнопки залежать від `object` |
 | `BookDeleteView` | `books/book_confirm_delete.html` | видалення тільки через POST; редирект на каталог |
+| `AuthorListView` | `books/author_list.html` | `annotate(Count("books"))`, `paginate_by = 20` |
+| `AuthorDetailView` | `books/author_detail.html` | книги автора через `author.books` |
+
+Сторінки авторів тільки для перегляду: авторів додають і редагують в адмінці.
+Для staff-користувачів на сторінках авторів є посилання в адмінку.
 
 Після створення, редагування й видалення `SuccessMessageMixin` показує
 повідомлення (messages framework → Bootstrap alert).
@@ -102,11 +111,12 @@ media/                       # завантажені обкладинки (не
 
 | Параметр | Що робить |
 |---|---|
-| `q` | пошук за назвою або автором (без урахування регістру, зокрема для кирилиці) |
+| `q` | пошук за назвою або іменем автора (без урахування регістру, зокрема для кирилиці) |
 | `category` | категорія за `slug` |
+| `author` | автор за `pk` |
 | `stock` | наявність: `in_stock` / `low` (≤ 5) / `out` |
 | `price_min`, `price_max` | діапазон ціни; якщо «від» більше за «до», форма покаже помилку |
-| `sort` | `title`, `-title`, `price`, `-price`, `-created_at` |
+| `sort` | `title`, `-title`, `author__name`, `price`, `-price`, `-created_at` |
 
 Некоректні значення (`?price_min=abc`) не ламають сторінку: форма показує
 помилку, а каталог виводить усі книги.
@@ -142,20 +152,39 @@ media/                       # завантажені обкладинки (не
 | Модель | Поля | Примітки |
 |---|---|---|
 | `Category` | `name`, `slug` | обидва унікальні |
-| `Book` | `title`, `author`, `price`, `description`, `stock`, `cover`, `categories`, `created_at`, `updated_at` | `price ≥ 0`; зв'язок ManyToMany з категоріями через `BookCategory`; `get_absolute_url()`, `cover_url`, `is_low_stock` |
+| `Author` | `name`, `bio` | `name` унікальне; `bio` необов'язкове |
+| `Book` | `title`, `author`, `price`, `description`, `stock`, `cover`, `categories`, `created_at`, `updated_at` | `price ≥ 0`; `author` — ForeignKey на `Author` з `on_delete=PROTECT` (не можна видалити автора, у якого є книги); зв'язок ManyToMany з категоріями через `BookCategory`; `get_absolute_url()`, `cover_url`, `is_low_stock` |
 | `BookCategory` | `book`, `category` | проміжна модель; `on_delete=PROTECT` не дає видалити категорію, у якій є книги; пара `book + category` унікальна |
 
 `BookQuerySet.by_stock_status()` фільтрує книги за наявністю. Його
 використовують і каталог, і адмінка; поріг «мало» задає `LOW_STOCK_THRESHOLD = 5`.
 
+### Перенесення авторів в окрему модель
+
+Раніше автор був текстовим полем `Book.author`. Перенесення зроблено
+чотирма міграціями, щоб не втратити дані:
+
+| Міграція | Що робить |
+|---|---|
+| `0003_rename_author_book_author_name` | перейменовує текстове поле на `author_name` |
+| `0004_author_book_author` | створює `Author` і тимчасовий необов'язковий `Book.author` |
+| `0005_move_authors_to_author_model` | data migration: для кожного імені створює `Author` (`get_or_create`) і пов'язує з книгами |
+| `0006_remove_book_author_name_alter_book_author` | видаляє `author_name`, робить `author` обов'язковим |
+
+Просто замінити `CharField` на `ForeignKey` під тим самим іменем не можна:
+Django згенерував би `AlterField` і спробував би перетворити імена авторів на числові id.
+Усі чотири міграції можна відкотити (`python manage.py migrate books 0002`).
+
 ## Адмінка
 
 - **Книги:**
-  - колонки: мініатюра обкладинки, категорії, ознака наявності;
+  - колонки: мініатюра обкладинки, автор, категорії, ознака наявності;
+  - автор вибирається з пошуком під час введення (`autocomplete_fields`);
   - ціну й кількість можна редагувати прямо у списку;
   - фільтри: наявність (є / мало ≤ 5 / немає), категорії, дата;
-  - пошук за назвою, автором, описом і категорією;
+  - пошук за назвою, іменем автора, описом і категорією;
   - `date_hierarchy`, `fieldsets` із секцією «Cover» (прев'ю обкладинки), inline для категорій.
+- **Автори:** кількість книг (із сортуванням), пошук за іменем, біографія.
 - **Категорії:** кількість книг (із сортуванням), автозаповнення `slug`,
   inline зі списком книг.
 - Запити оптимізовано через `select_related` / `prefetch_related` та `annotate`.
@@ -192,7 +221,7 @@ python manage.py runserver
 
 ### `seed_books`
 
-Створює 5 категорій і набір книг. Команду можна запускати повторно,
+Створює 5 категорій, 10 авторів і 12 книг. Команду можна запускати повторно,
 дублікати не створюються.
 
 ```bash
@@ -250,6 +279,9 @@ Python-версію з `str.casefold()`. Реєструє її сигнал `con
 - **Старі файли обкладинок не видаляються.** Django не прибирає файл з
   диска, коли книгу видалено, обкладинку замінено або позначено «Remove».
   Такі файли лишаються в `media/`.
+- **Сортування кирилиці в SQLite.** SQLite порівнює рядки за кодами
+  символів Unicode, тому українська «І» стоїть перед «А» («Іван Багряний»
+  опиняється першим у списку авторів). Стосується сортування авторів і книг за назвою.
 - **Валюта одна.** Ціни показуються з `₴`; підтримку кількох валют
   (UAH, USD) заплановано на наступні домашки.
 
