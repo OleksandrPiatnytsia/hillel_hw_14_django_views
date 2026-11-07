@@ -3,6 +3,12 @@
 
 /* ---------- Layout: footer sticks to the bottom on short pages ---------- */
 
+:root {
+    /* Height of the sticky navbar (Bootstrap default: 56px).
+       Sticky elements below it use this so they don't slide under it. */
+    --app-navbar-height: 3.5rem;
+}
+
 body {
     min-height: 100vh;
     display: flex;
@@ -62,6 +68,10 @@ main {
     /* Sidebar stays visible while scrolling the results (lg+ only) */
     .filters-sidebar {
         position: sticky;
-        top: 1rem;
+        /* below the sticky navbar + 1rem gap, otherwise it hides under the navbar */
+        top: calc(var(--app-navbar-height) + 1rem);
+        /* on low screens the filters scroll inside the card instead of being cut off */
+        max-height: calc(100vh - var(--app-navbar-height) - 2rem);
+        overflow-y: auto;
     }
 }
